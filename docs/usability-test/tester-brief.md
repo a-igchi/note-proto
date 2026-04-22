@@ -65,7 +65,7 @@
 
 ## レポート
 
-`docs/usability-test/reports/YYYY-MM-DD.md` に以下の形式で書く:
+`docs/usability-test/reports/YYYY-MM-DD.md` (1日1回のみの手動実施) または `docs/usability-test/reports/YYYY-MM-DD-NNN.md` (同日複数ラウンド時の連番、NNN は `001` 始まり) に以下の形式で書く:
 
 ```markdown
 # ユーザビリティテスト結果 YYYY-MM-DD
