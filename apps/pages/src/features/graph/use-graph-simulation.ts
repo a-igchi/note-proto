@@ -23,10 +23,13 @@ export const useGraphSimulation = (
   width: number,
   height: number,
   onTick: (nodes: SimNode[], links: SimLink[]) => void,
+  onEnd?: (nodes: SimNode[]) => void,
 ) => {
   const simRef = useRef<ReturnType<typeof forceSimulation<SimNode>> | null>(null);
   const nodesRef = useRef<SimNode[]>([]);
   const linksRef = useRef<SimLink[]>([]);
+  const onEndRef = useRef(onEnd);
+  onEndRef.current = onEnd;
 
   const update = useCallback(
     (data: GraphData) => {
@@ -66,7 +69,8 @@ export const useGraphSimulation = (
           .force("charge", forceManyBody().strength(-500))
           .force("center", forceCenter(width / 2, height / 2))
           .force("collide", forceCollide(60))
-          .on("tick", () => onTick([...nodesRef.current], [...linksRef.current]));
+          .on("tick", () => onTick([...nodesRef.current], [...linksRef.current]))
+          .on("end", () => onEndRef.current?.([...nodesRef.current]));
       } else {
         // Only links changed — update link force and reheat gently
         const linkForce = simRef.current.force("link") as ReturnType<

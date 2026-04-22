@@ -59,7 +59,72 @@ export const GraphView = () => {
     setLinks(newLinks);
   }, []);
 
-  const { update, nodesRef } = useGraphSimulation(window.innerWidth, window.innerHeight, onTick);
+  // Compute a transform that fits all given nodes into the viewport with padding.
+  const computeFitTransform = useCallback((targetNodes: SimNode[]) => {
+    const svg = svgRef.current;
+    if (!svg || targetNodes.length === 0) return null;
+    const rect = svg.getBoundingClientRect();
+    const viewW = rect.width;
+    const viewH = rect.height;
+    if (viewW <= 0 || viewH <= 0) return null;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const n of targetNodes) {
+      if (n.x == null || n.y == null) continue;
+      if (n.x < minX) minX = n.x;
+      if (n.y < minY) minY = n.y;
+      if (n.x > maxX) maxX = n.x;
+      if (n.y > maxY) maxY = n.y;
+    }
+    if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null;
+
+    // Account for node radius + label above
+    const nodePad = 48;
+    minX -= nodePad;
+    minY -= nodePad;
+    maxX += nodePad;
+    maxY += nodePad;
+
+    const boxW = Math.max(maxX - minX, 1);
+    const boxH = Math.max(maxY - minY, 1);
+    const viewportPad = 40;
+    const scale = Math.min(
+      (viewW - viewportPad * 2) / boxW,
+      (viewH - viewportPad * 2) / boxH,
+      1, // never zoom in further than 1:1
+    );
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const x = viewW / 2 - cx * scale;
+    const y = viewH / 2 - cy * scale;
+    return { x, y, scale: Math.max(scale, 0.1) };
+  }, []);
+
+  // Flag: when true, the next simulation "end" (or subsequent tick burst) should fit the view.
+  const fitRequestedRef = useRef(true);
+  const prevNodeCountRef = useRef(0);
+
+  const onSimulationEnd = useCallback(
+    (endNodes: SimNode[]) => {
+      if (!fitRequestedRef.current) return;
+      const next = computeFitTransform(endNodes);
+      if (next) {
+        fitRequestedRef.current = false;
+        setTransform(next);
+      }
+    },
+    [computeFitTransform],
+  );
+
+  const { update, nodesRef } = useGraphSimulation(
+    window.innerWidth,
+    window.innerHeight,
+    onTick,
+    onSimulationEnd,
+  );
 
   const { data: graphData } = useQuery({
     queryKey: queryKeys.graph,
@@ -70,6 +135,12 @@ export const GraphView = () => {
   const prevDataRef = useRef<typeof graphData>(undefined);
   if (graphData && graphData !== prevDataRef.current) {
     prevDataRef.current = graphData;
+    // If node count changed (e.g. user added a new note), request a fitView
+    // so the new node ends up visible instead of landing off-screen.
+    if (graphData.nodes.length !== prevNodeCountRef.current) {
+      fitRequestedRef.current = true;
+      prevNodeCountRef.current = graphData.nodes.length;
+    }
     update(graphData);
   }
 
@@ -131,6 +202,8 @@ export const GraphView = () => {
     if (!svgRect) return;
     const mx = e.clientX - svgRect.left;
     const my = e.clientY - svgRect.top;
+    // User is actively zooming — cancel any pending auto-fit so we don't snap back on them.
+    fitRequestedRef.current = false;
     setTransform((prev) => {
       const newScale = Math.min(Math.max(prev.scale * delta, 0.1), 5);
       const ratio = newScale / prev.scale;
@@ -152,6 +225,8 @@ export const GraphView = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button === 0 && (e.target as SVGElement).tagName === "svg") {
       isPanning.current = true;
+      // User is actively panning — cancel any pending auto-fit.
+      fitRequestedRef.current = false;
       panStart.current = { x: e.clientX - transform.x, y: e.clientY - transform.y };
     }
   };
