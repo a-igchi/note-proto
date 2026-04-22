@@ -25,3 +25,8 @@ dist-ssr
 
 # AI agent worktrees
 .claude/worktrees/
+
+# Playwright
+.playwright/
+.playwright-cli
+
