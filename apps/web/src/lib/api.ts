@@ -19,6 +19,7 @@ const fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
 
 export const api = {
   getNotes: () => fetchJson<Note[]>("/notes"),
+  searchNotes: (query: string) => fetchJson<Note[]>(`/notes/search?q=${encodeURIComponent(query)}`),
   getNote: (id: string) => fetchJson<NoteWithContent>(`/notes/${id}`),
   createNote: (title: string) =>
     fetchJson<Note>("/notes", { method: "POST", body: JSON.stringify({ title }) }),

@@ -8,6 +8,12 @@ notesRouter.get("/", async (c) => {
   return c.json(notes);
 });
 
+notesRouter.get("/search", async (c) => {
+  const q = c.req.query("q") ?? "";
+  const notes = await graph.searchNotes(q);
+  return c.json(notes);
+});
+
 notesRouter.get("/:id", async (c) => {
   const note = await graph.getNote(c.req.param("id"));
   return note ? c.json(note) : c.json({ error: "Not found" }, 404);

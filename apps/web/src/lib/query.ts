@@ -13,4 +13,5 @@ export const queryKeys = {
   graph: ["graph"] as const,
   notes: ["notes"] as const,
   note: (id: string) => ["note", id] as const,
+  search: (query: string) => ["search", query] as const,
 };
