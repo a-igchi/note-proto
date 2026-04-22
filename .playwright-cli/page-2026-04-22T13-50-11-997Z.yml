@@ -1,0 +1,12 @@
+- generic [ref=e35]:
+    - button "戻る" [ref=e37]:
+        - img [ref=e38]
+        - text: 戻る
+    - generic [ref=e40]:
+        - textbox "タイトル" [ref=e42]
+        - generic [ref=e44]:
+            - textbox [active] [ref=e45]:
+                - paragraph [ref=e46]: Please enter...
+            - generic [ref=e47] [cursor=pointer]:
+                - img [ref=e50]
+                - img [ref=e55]

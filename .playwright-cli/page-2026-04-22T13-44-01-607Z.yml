@@ -1,0 +1,18 @@
+- generic:
+    - generic:
+        - generic:
+            - img:
+                - generic:
+                    - generic:
+                        - generic: TODO
+                    - generic:
+                        - generic: 買い物メモ
+        - button:
+            - img
+    - alertdialog "ノートを削除" [ref=e309]:
+        - generic [ref=e310]:
+            - heading "ノートを削除" [level=2] [ref=e311]
+            - paragraph [ref=e312]: このノートを削除しますか？この操作は取り消せません。
+        - generic [ref=e313]:
+            - button "キャンセル" [active] [ref=e314]
+            - button "削除" [ref=e315]

@@ -1,0 +1,13 @@
+- generic [ref=e2]:
+    - generic [ref=e265]:
+        - img [ref=e266]:
+            - generic [ref=e267]:
+                - generic [ref=e268] [cursor=pointer]:
+                    - generic: TODO
+                - generic [ref=e270] [cursor=pointer]:
+                    - generic: 買い物メモ
+        - generic [ref=e278]:
+            - textbox "ノートを検索..." [active] [ref=e279]: 買
+            - button "買い物メモ" [ref=e281]
+    - button [ref=e272]:
+        - img [ref=e273]

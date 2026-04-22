@@ -1,0 +1,9 @@
+- generic [ref=e2]:
+    - img [ref=e26]:
+        - generic [ref=e27]:
+            - generic [ref=e29] [cursor=pointer]:
+                - generic: TODO
+            - generic [ref=e31] [cursor=pointer]:
+                - generic: 買い物メモ
+    - button [ref=e33]:
+        - img [ref=e34]

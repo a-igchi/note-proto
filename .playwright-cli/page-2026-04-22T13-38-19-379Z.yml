@@ -1,0 +1,6 @@
+- generic [ref=e2]:
+    - img [ref=e185]:
+        - generic [ref=e187] [cursor=pointer]:
+            - generic: 買い物メモ
+    - button [ref=e189]:
+        - img [ref=e190]

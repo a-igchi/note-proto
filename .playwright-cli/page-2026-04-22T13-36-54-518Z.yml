@@ -1,0 +1,27 @@
+- generic [ref=e7]:
+    - button "戻る" [ref=e9]:
+        - img [ref=e10]
+        - text: 戻る
+    - generic [ref=e12]:
+        - textbox "タイトル" [ref=e14]: 買い物メモ
+        - generic [ref=e16]:
+            - textbox [active] [ref=e17]:
+                - paragraph [ref=e18]: 今日買うもの
+                - list [ref=e31]:
+                    - listitem [ref=e33]:
+                        - img [ref=e36]
+                        - paragraph [ref=e41]: 牛乳
+                    - listitem [ref=e43]:
+                        - img [ref=e46]
+                        - paragraph [ref=e51]: 卵
+                    - listitem [ref=e53]:
+                        - img [ref=e56]
+                        - paragraph [ref=e61]
+                - paragraph [ref=e30]
+            - generic:
+                - generic:
+                    - generic:
+                        - img
+                - generic:
+                    - generic:
+                        - img

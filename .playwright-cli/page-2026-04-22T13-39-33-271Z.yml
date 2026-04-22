@@ -1,0 +1,12 @@
+- generic [ref=e242]:
+    - button "戻る" [ref=e244]:
+        - img [ref=e245]
+        - text: 戻る
+    - generic [ref=e247]:
+        - textbox "タイトル" [ref=e249]: TODO
+        - generic [ref=e251]:
+            - textbox [active] [ref=e252]:
+                - paragraph [ref=e253]: Please enter...
+            - generic [ref=e254] [cursor=pointer]:
+                - img [ref=e257]
+                - img [ref=e262]

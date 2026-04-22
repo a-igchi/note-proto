@@ -1,0 +1,16 @@
+- generic [ref=e283]:
+    - button "戻る" [ref=e285]:
+        - img [ref=e286]
+        - text: 戻る
+    - generic [ref=e288]:
+        - textbox "タイトル" [ref=e290]: TODO
+        - generic [ref=e292]:
+            - textbox [ref=e293]:
+                - paragraph [ref=e294]: 仕事のタスク
+            - generic:
+                - generic:
+                    - generic:
+                        - img
+                - generic:
+                    - generic:
+                        - img
