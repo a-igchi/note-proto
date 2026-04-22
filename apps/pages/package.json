@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@fontsource-variable/geist": "catalog:",
-    "@milkdown/kit": "catalog:",
-    "@milkdown/theme-nord": "catalog:",
+    "@milkdown/crepe": "catalog:",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "catalog:",
     "adapter-idb": "workspace:*",

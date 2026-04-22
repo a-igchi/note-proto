@@ -1,9 +1,7 @@
 import { useRef, useEffect } from "react";
-import { Editor, rootCtx, defaultValueCtx } from "@milkdown/kit/core";
-import { commonmark } from "@milkdown/kit/preset/commonmark";
-import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
-import { nord } from "@milkdown/theme-nord";
-import "@milkdown/theme-nord/style.css";
+import { Crepe } from "@milkdown/crepe";
+import "@milkdown/crepe/theme/common/style.css";
+import "@milkdown/crepe/theme/frame.css";
 
 type MilkdownEditorProps = {
   defaultValue: string;
@@ -12,34 +10,31 @@ type MilkdownEditorProps = {
 
 export const MilkdownEditor = ({ defaultValue, onChange }: MilkdownEditorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<Editor | null>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const editor = Editor.make()
-      .config(nord)
-      .config((ctx) => {
-        ctx.set(rootCtx, containerRef.current!);
-        ctx.set(defaultValueCtx, defaultValue);
-        ctx.get(listenerCtx).markdownUpdated((_ctx, markdown) => {
-          onChange(markdown);
-        });
-      })
-      .use(commonmark)
-      .use(listener)
-      .create();
-
-    void editor.then((e) => {
-      editorRef.current = e;
+    const crepe = new Crepe({
+      root: containerRef.current,
+      defaultValue,
     });
 
+    crepe.on((listener) => {
+      listener.markdownUpdated((_ctx, markdown) => {
+        onChangeRef.current(markdown);
+      });
+    });
+
+    void crepe.create();
+
     return () => {
-      void editor.then((e) => e.destroy());
+      void crepe.destroy();
     };
     // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={containerRef} className="prose max-w-none min-h-[300px]" />;
+  return <div ref={containerRef} className="min-h-[300px]" />;
 };
