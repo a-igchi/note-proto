@@ -1,6 +1,8 @@
 ---
+name: usability-round
 description: ユーザビリティテスト 1 ラウンド (テスター → 課題管理係 → 修正役) を順に実行する。`/loop /usability-round` で連続実行も可。
 argument-hint: "[dev_server_url]"
+disable-model-invocation: true
 ---
 
 ユーザビリティテストループを 1 ラウンド回してください。引数: `$ARGUMENTS`（開発サーバー URL。無ければ `http://localhost:5173` で試行し、繋がらなければ user に聞く）。
