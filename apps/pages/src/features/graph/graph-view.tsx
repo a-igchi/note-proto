@@ -7,6 +7,7 @@ import { unwrap } from "../../lib/unwrap";
 import { queryKeys } from "../../lib/query";
 import { useGraphSimulation, type SimNode, type SimLink } from "./use-graph-simulation";
 import { LinkPicker } from "../../features/link-picker/link-picker";
+import { SearchPalette } from "../../features/search-palette/search-palette";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,19 +36,19 @@ export const GraphView = () => {
   const [linkPickerNodeId, setLinkPickerNodeId] = useState<string | null>(null);
   const [deleteNodeId, setDeleteNodeId] = useState<string | null>(null);
   const [dragNode, setDragNode] = useState<string | null>(null);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [searchPaletteOpen, setSearchPaletteOpen] = useState(false);
 
-  // Keyboard shortcut: Cmd+K / Ctrl+K opens link picker
+  // Keyboard shortcut: Cmd+K / Ctrl+K opens the search palette
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k" && selectedNodeId) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setLinkPickerNodeId(selectedNodeId);
+        setSearchPaletteOpen(true);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [selectedNodeId]);
+  }, []);
 
   // Viewport transform for pan/zoom
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
@@ -97,9 +98,6 @@ export const GraphView = () => {
   const handleContextMenu = (e: React.MouseEvent, menu: ContextMenu) => {
     e.preventDefault();
     setContextMenu(menu);
-    if (menu.type === "node") {
-      setSelectedNodeId(menu.nodeId);
-    }
   };
 
   const handleDeleteNote = (nodeId: string) => {
@@ -323,6 +321,9 @@ export const GraphView = () => {
         {linkPickerNodeId && (
           <LinkPicker sourceNodeId={linkPickerNodeId} onClose={() => setLinkPickerNodeId(null)} />
         )}
+
+        {/* Search Palette (Cmd+K / Ctrl+K) */}
+        {searchPaletteOpen && <SearchPalette onClose={() => setSearchPaletteOpen(false)} />}
       </div>
 
       {/* FAB - New Note Button */}
