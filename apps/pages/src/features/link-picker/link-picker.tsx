@@ -17,15 +17,15 @@ export const LinkPicker = ({ sourceNodeId, onClose }: LinkPickerProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: notes = [] } = useQuery({
-    queryKey: queryKeys.notes,
-    queryFn: () => graph.getNotes(),
+  const trimmed = search.trim();
+
+  const { data: results = [] } = useQuery({
+    queryKey: queryKeys.search(trimmed),
+    queryFn: () => graph.searchNotes(trimmed),
+    enabled: trimmed.length > 0,
   });
 
-  const filtered = notes.filter(
-    (note: Note) =>
-      note.id !== sourceNodeId && note.title.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = results.filter((note: Note) => note.id !== sourceNodeId);
 
   const createLinkMutation = useMutation({
     mutationFn: async ({ targetId }: { targetId: string }) =>
@@ -76,7 +76,7 @@ export const LinkPicker = ({ sourceNodeId, onClose }: LinkPickerProps) => {
           className="w-full px-4 py-3 bg-transparent border-b border-border outline-none text-sm"
           autoFocus
         />
-        {search && filtered.length > 0 && (
+        {trimmed && filtered.length > 0 && (
           <div className="max-h-[200px] overflow-y-auto py-1">
             {filtered.map((note: Note, index: number) => (
               <button
@@ -91,7 +91,7 @@ export const LinkPicker = ({ sourceNodeId, onClose }: LinkPickerProps) => {
             ))}
           </div>
         )}
-        {search && filtered.length === 0 && (
+        {trimmed && filtered.length === 0 && (
           <div className="px-4 py-3 text-sm text-muted-foreground">該当するノートがありません</div>
         )}
       </div>

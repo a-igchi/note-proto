@@ -20,6 +20,7 @@ export type KnowledgeGraphConfig = {
 export type KnowledgeGraph = {
   getNotes: () => Promise<Note[]>;
   getNote: (id: string) => Promise<NoteWithContent | undefined>;
+  searchNotes: (query: string) => Promise<Note[]>;
   createNote: (title: string) => Promise<Result<Note, CreateNoteError>>;
   renameNote: (id: string, title: string) => Promise<Result<Note, RenameNoteError>>;
   deleteNote: (id: string) => Promise<Result<{ ok: true }, "NOT_FOUND">>;
@@ -42,6 +43,20 @@ export const createKnowledgeGraph = (config: KnowledgeGraphConfig): KnowledgeGra
       if (!note) return undefined;
       const content = await adapter.getContent(id);
       return { ...note, content };
+    },
+
+    searchNotes: async (query) => {
+      const trimmed = query.trim();
+      if (!trimmed) return [];
+
+      const needle = trimmed.toLowerCase();
+      const notes = await adapter.getAllNotes();
+      const contents = await Promise.all(notes.map((n) => adapter.getContent(n.id)));
+
+      return notes.filter((note, i) => {
+        const haystack = `${note.title}\n${contents[i] ?? ""}`.toLowerCase();
+        return haystack.includes(needle);
+      });
     },
 
     createNote: async (title) => {
