@@ -1,7 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Pencil } from "lucide-react";
 import { validateTitle as validateTitleCore } from "core";
 import { useGraph } from "../../lib/graph";
 import { unwrap } from "../../lib/unwrap";
@@ -18,6 +18,82 @@ const validateTitle = (title: string): string | null => {
   return error ? (ERROR_MESSAGES[error] ?? error) : null;
 };
 
+type SaveStatus = "idle" | "dirty" | "saving" | "saved";
+
+const formatSavedAt = (from: Date, now: Date): string => {
+  const diffSec = Math.max(0, Math.floor((now.getTime() - from.getTime()) / 1000));
+  if (diffSec < 5) return "たった今 自動保存しました";
+  if (diffSec < 60) return `${diffSec}秒前に自動保存`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}分前に自動保存`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}時間前に自動保存`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `${diffDay}日前に自動保存`;
+};
+
+type SaveStatusIndicatorProps = {
+  status: SaveStatus;
+  lastSavedAt: Date | null;
+  isNew: boolean;
+};
+
+const SaveStatusIndicator = ({ status, lastSavedAt, isNew }: SaveStatusIndicatorProps) => {
+  // Re-render every 10s so the relative time stays fresh.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (status !== "saved" || !lastSavedAt) return;
+    const interval = setInterval(() => setTick((n) => n + 1), 10_000);
+    return () => clearInterval(interval);
+  }, [status, lastSavedAt]);
+
+  if (status === "saving") {
+    return (
+      <span
+        className="flex items-center gap-1 text-sm text-muted-foreground"
+        aria-live="polite"
+        data-testid="save-status"
+      >
+        <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+        保存中…
+      </span>
+    );
+  }
+
+  if (status === "saved" && lastSavedAt) {
+    return (
+      <span
+        className="flex items-center gap-1 text-sm text-muted-foreground"
+        aria-live="polite"
+        data-testid="save-status"
+      >
+        <Check size={14} aria-hidden="true" />
+        {formatSavedAt(lastSavedAt, new Date())}
+      </span>
+    );
+  }
+
+  if (status === "dirty") {
+    return (
+      <span
+        className="flex items-center gap-1 text-sm text-muted-foreground"
+        aria-live="polite"
+        data-testid="save-status"
+      >
+        <Pencil size={14} aria-hidden="true" />
+        編集中…
+      </span>
+    );
+  }
+
+  // idle
+  return (
+    <span className="text-sm text-muted-foreground" data-testid="save-status">
+      {isNew ? "未保存" : "変更なし"}
+    </span>
+  );
+};
+
 export const EditorPanel = () => {
   const graph = useGraph();
   const { id } = useParams<{ id: string }>();
@@ -29,7 +105,10 @@ export const EditorPanel = () => {
   const [content, setContent] = useState("");
   const [titleError, setTitleError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inFlightSavesRef = useRef(0);
 
   // Load existing note
   const { data: note } = useQuery({
@@ -44,6 +123,24 @@ export const EditorPanel = () => {
     setContent(note.content);
     setInitialized(true);
   }
+
+  const beginSave = useCallback(() => {
+    inFlightSavesRef.current += 1;
+    setSaveStatus("saving");
+  }, []);
+
+  const endSave = useCallback((ok: boolean) => {
+    inFlightSavesRef.current = Math.max(0, inFlightSavesRef.current - 1);
+    if (inFlightSavesRef.current === 0) {
+      if (ok) {
+        setLastSavedAt(new Date());
+        setSaveStatus("saved");
+      } else {
+        // On failure, fall back to "dirty" so the user knows changes are not yet stored.
+        setSaveStatus("dirty");
+      }
+    }
+  }, []);
 
   const createNoteMutation = useMutation({
     mutationFn: async ({ title, content }: { title: string; content: string }) => {
@@ -78,13 +175,23 @@ export const EditorPanel = () => {
     const value = e.target.value;
     setTitle(value);
     setTitleError(validateTitle(value));
+    if (!isNew) {
+      setSaveStatus("dirty");
+    }
   };
 
   const handleTitleBlur = () => {
     if (!isNew && id && note && title !== note.title) {
       const error = validateTitle(title);
       if (!error) {
-        renameNoteMutation.mutate({ id, title });
+        beginSave();
+        renameNoteMutation.mutate(
+          { id, title },
+          {
+            onSuccess: () => endSave(true),
+            onError: () => endSave(false),
+          },
+        );
       }
     }
   };
@@ -94,13 +201,21 @@ export const EditorPanel = () => {
       setContent(markdown);
       // Auto-save with debounce for existing notes
       if (!isNew && id) {
+        setSaveStatus("dirty");
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
         saveTimerRef.current = setTimeout(() => {
-          saveContentMutation.mutate({ id, content: markdown });
+          beginSave();
+          saveContentMutation.mutate(
+            { id, content: markdown },
+            {
+              onSuccess: () => endSave(true),
+              onError: () => endSave(false),
+            },
+          );
         }, 500);
       }
     },
-    [isNew, id, saveContentMutation],
+    [isNew, id, saveContentMutation, beginSave, endSave],
   );
 
   const handleBack = async () => {
@@ -143,15 +258,26 @@ export const EditorPanel = () => {
     }
   };
 
+  // Decide the back-button label so users understand whether changes will be preserved.
+  const backButtonLabel = (() => {
+    if (isNew) {
+      // New note with no input → discard, otherwise save.
+      if (title === "" && content === "") return "戻る";
+      return "保存して戻る";
+    }
+    return "保存して戻る";
+  })();
+
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="flex justify-end p-4">
+      <div className="flex justify-between items-center p-4 gap-3">
+        <SaveStatusIndicator status={saveStatus} lastSavedAt={lastSavedAt} isNew={isNew} />
         <button
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           onClick={handleBack}
         >
           <ArrowLeft size={16} />
-          戻る
+          {backButtonLabel}
         </button>
       </div>
       <div className="flex-1 max-w-3xl w-full mx-auto px-6 pb-12">
