@@ -2,13 +2,13 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   staged: {
-    "*": "vp run check",
+    "*": "vp check",
   },
   run: {
     cache: true,
     tasks: {
-      check: {
-        command: "vp check --fix",
+      checkAll: {
+        command: "vp run -r check",
       },
     },
   },

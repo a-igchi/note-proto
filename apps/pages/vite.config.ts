@@ -21,6 +21,7 @@ export default defineConfig({
   run: {
     tasks: {
       check: {
+        cache: true,
         command: "vp check --fix",
       },
     },
