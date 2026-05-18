@@ -42,6 +42,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
     "vite": "catalog:",
+    "vite-plugin-pwa": "catalog:",
     "vite-plus": "catalog:",
     "wrangler": "^4.80.0"
   },
